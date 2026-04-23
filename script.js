@@ -123,29 +123,50 @@ function goToSlide(index) {
 }
 
 // Auto-avance automático
-let autoSlide = setInterval(() => {
-  const total = getTotalSlides();
-  const next = currentSlide >= total - 1 ? 0 : currentSlide + 1;
-  goToSlide(next);
-}, 3000);
+// Sin auto-avance — solo swipe/drag manual
 
-// Pausa al hacer hover
+// Pausa al hacer hover (ya no necesaria pero la dejamos limpia)
 const sliderWrap = document.querySelector('.testimonios-slider');
-sliderWrap.addEventListener('mouseenter', () => clearInterval(autoSlide));
-sliderWrap.addEventListener('mouseleave', () => {
-  autoSlide = setInterval(() => {
-    const total = getTotalSlides();
-    const next = currentSlide >= total - 1 ? 0 : currentSlide + 1;
-    goToSlide(next);
-  }, 3000);
+
+// ── DRAG CON MOUSE (desktop) ─────────────────────────────────────
+let isDragging = false;
+let dragStartX = 0;
+
+track.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStartX = e.clientX;
+  track.style.cursor = 'grabbing';
 });
 
-// Swipe en móvil
+window.addEventListener('mouseup', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  track.style.cursor = 'grab';
+  const diff = dragStartX - e.clientX;
+  if (Math.abs(diff) > 40) goToSlide(currentSlide + (diff > 0 ? 1 : -1));
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  e.preventDefault();
+});
+
+// ── SWIPE CON DEDO (mobile) ──────────────────────────────────────
 let touchStartX = 0;
-track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+track.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+
 track.addEventListener('touchend', e => {
   const diff = touchStartX - e.changedTouches[0].clientX;
   if (Math.abs(diff) > 40) goToSlide(currentSlide + (diff > 0 ? 1 : -1));
+});
+
+// ── PAUSA CARRUSEL CUANDO HAY VIDEO REPRODUCIÉNDOSE ─────────────
+document.querySelectorAll('.galeria-card--video video').forEach(video => {
+  video.addEventListener('play', () => {
+    // sin autoSlide que pausar, no hace falta
+  });
 });
 
 // Rebuild en resize
@@ -211,4 +232,15 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       window.scrollTo({ top, behavior: 'smooth' });
     }
   });
+
+// ── TABS TRAYECTORIA ─────────────────────────────────────────────
+document.querySelectorAll('.tray-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tray-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tray-tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
 });
