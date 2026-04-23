@@ -233,6 +233,66 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     }
   });
 
+// ── GALERÍA MOMENTOS — LIGHTBOX ──────────────────────────────────
+(function () {
+  const items = Array.from(document.querySelectorAll('.momento-item'));
+  const modal   = document.getElementById('momentosModal');
+  const img     = document.getElementById('modalImg');
+  const counter = document.getElementById('modalCounter');
+  let current   = 0;
+
+  function getSrc(i) { return items[i].querySelector('img').src; }
+
+  function showModal(index) {
+    current = index;
+    img.src = getSrc(current);
+    img.alt = items[current].querySelector('img').alt;
+    counter.textContent = (current + 1) + ' / ' + items.length;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function navigate(dir) {
+    current = (current + dir + items.length) % items.length;
+    img.style.opacity = '0';
+    img.style.transform = 'scale(0.96)';
+    setTimeout(() => {
+      img.src = getSrc(current);
+      img.alt = items[current].querySelector('img').alt;
+      counter.textContent = (current + 1) + ' / ' + items.length;
+      img.style.opacity = '1';
+      img.style.transform = 'scale(1)';
+    }, 180);
+  }
+
+  img.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
+
+  items.forEach((item, i) => item.addEventListener('click', () => showModal(i)));
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+  document.getElementById('modalPrev').addEventListener('click', () => navigate(-1));
+  document.getElementById('modalNext').addEventListener('click', () => navigate(1));
+
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape')     closeModal();
+    if (e.key === 'ArrowLeft')  navigate(-1);
+    if (e.key === 'ArrowRight') navigate(1);
+  });
+
+  let touchStartX = 0;
+  modal.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+  modal.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) navigate(dx < 0 ? 1 : -1);
+  });
+})();
+
 // ── TABS TRAYECTORIA ─────────────────────────────────────────────
 document.querySelectorAll('.tray-tab').forEach(tab => {
   tab.addEventListener('click', () => {
